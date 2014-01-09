@@ -1,0 +1,39 @@
+{
+    "name" : "config",
+    "jndiName" : "",
+    "transactionMode" : "none",
+    "workspaces" : {
+        "default" : "load",
+        "predefined" : ["load"],
+        "allowCreation" : true
+    },
+    "storage" : {
+        "cacheName" : "DATAREPOSITORY",
+        "cacheConfiguration" : "concurrent/infinispan-cache.xml",
+        "binaryStorage" : {
+            "type" : "file",
+            "directory": "target/concurrent/binary/",
+            "minimumBinarySizeInBytes" : 999
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "username" : "<anonymous>",
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        }
+    },
+    "query":{
+        "enabled":true,
+        "indexing":{
+            "rebuildOnStartup":{
+                "when":"if_missing"
+            }
+        },
+        "indexStorage": {
+            "type":"ram"
+
+        }
+    },
+    "node-types" : ["concurrent/types.cnd"]
+}

@@ -1,0 +1,19 @@
+<jcr = 'http://www.jcp.org/jcr/1.0'>
+<nt = 'http://www.jcp.org/jcr/nt/1.0'>
+<acme = 'http://www.acme.com'>
+
+[nt:file] > nt:hierarchyNode
+  + jcr:content (nt:base) primary
+  + * (nt:base) sns copy
+
+
+[acme:base] > nt:file abstract
+- acme:customId (string)
+
+
+[acme:group] > nt:folder
+- acme:tags (string) multiple
+- acme:description (string)
+
+[acme:item] > acme:base
+- acme:subject (string)
