@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd"
+            xmlns="urn:infinispan:config:5.2">
+
+    <global>
+
+        <globalJmxStatistics enabled="false" allowDuplicateDomains="true"  />
+        <transport clusterName="cluster-${cluster.testname}">
+            <properties>
+                <property
+                        name="configurationFile"
+                        value="../modeshape-jcr/target/test-classes/cluster/jgroups-config-tcp.xml" />
+            </properties>
+        </transport>
+        <!--
+        Useful if you have enabled a Replication Queue and wish to fine tune the scheduled thread that flushes
+        such batch RPCs.  See
+
+           http://community.jboss.org/wiki/AsynchronousOptions#Replication_Queue-->
+        <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+           <properties>
+              <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+           </properties>
+        </replicationQueueScheduledExecutor>
+
+
+
+    </global>
+
+    <namedCache name="metadata">
+        <clustering mode="replication">
+
+            <async useReplQueue="true" replQueueInterval="1000" replQueueMaxElements="1000" />
+        </clustering>
+        <eviction strategy="LIRS" maxEntries="100"/>
+        <locking
+                isolationLevel="READ_COMMITTED"
+                lockAcquisitionTimeout="20000"
+                writeSkewCheck="false"
+                concurrencyLevel="500"
+                useLockStriping="false"
+                />
+        <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
+                     transactionMode="TRANSACTIONAL"
+                     lockingMode="PESSIMISTIC" />
+        <loaders passivation="false"
+                 shared="false"
+                 preload="false">
+            <loader class="org.infinispan.loaders.file.FileCacheStore"
+                    fetchPersistentState="true"
+                    purgeOnStartup="true">
+                <properties>
+                    <property name="location" value="../modeshape-jcr/target/modeshape-performance-test/${cluster.testname}/node${cluster.item.number}/repository" />
+                </properties>
+            </loader>
+        </loaders>
+    </namedCache>
+</infinispan>
