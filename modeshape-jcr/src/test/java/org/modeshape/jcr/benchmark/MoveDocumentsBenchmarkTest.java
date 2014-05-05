@@ -40,7 +40,7 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
     private static final String SOURCE_PATH = "/source";
     private static final String DEST_PATH = "/dest";
     private static final String EXPECTED_CONTENT = "Lorem ipsum";
-    private static final int EXPECTED_SIZE = 11;
+    private static final int EXPECTED_SIZE = 40;
 
     /**
      * List of documents identifiers, which will be validated on all
@@ -53,18 +53,6 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
     public void before() {
         taskResults.clear();
     }
-    /**
-     * Test async distribution mode with tcp transport
-     * Full configuration can be found by this
-     * <a href="file:////src/test/resources/cluster/moveDocumentsAsyncTcp/repo.json">link</a>
-     * @throws Exception on error
-     */
-    @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-    public void moveDocumentsAsyncTcp() throws Exception{
-        executeTest();
-    }
-
 
 
     /**
@@ -79,6 +67,41 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
         executeTest();
     }
 
+    /**
+     * Test async replication mode with tcp transport
+     * Full configuration can be found by this
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * @throws Exception on error
+     */
+    @Test
+    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+    public void moveDocumentsSyncTcp10() throws Exception{
+        executeTest(10);
+    }
+
+    /**
+     * Test async replication mode with tcp transport
+     * Full configuration can be found by this
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * @throws Exception on error
+     */
+    @Test
+    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+    public void moveDocumentsSyncTcp15() throws Exception{
+        executeTest(15);
+    }
+
+    /**
+     * Test async replication mode with tcp transport
+     * Full configuration can be found by this
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * @throws Exception on error
+     */
+    @Test
+    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
+    public void moveDocumentsSyncTcp20() throws Exception{
+        executeTest(20);
+    }
     /**
      * Generate list of {@see Callable} tasks.
      * One task will login to random repo in cluster and create document

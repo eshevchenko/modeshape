@@ -10,7 +10,7 @@
             <properties>
                 <property
                     name="configurationFile"
-                    value="../modeshape-jcr/target/test-classes/cluster/jgroups-config-tcp.xml" />
+                    value="../modeshape-jcr/target/test-classes/cluster/${cluster.testname}/jgroups.xml" />
             </properties>
         </transport>
     </global>
@@ -19,13 +19,6 @@
         <clustering mode="replication">
             <sync/>
         </clustering>
-        <locking
-                isolationLevel="READ_COMMITTED"
-                lockAcquisitionTimeout="20000"
-                writeSkewCheck="false"
-                concurrencyLevel="500"
-                useLockStriping="false"
-                />
         <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
                      transactionMode="TRANSACTIONAL"
                      lockingMode="PESSIMISTIC" />
@@ -36,7 +29,7 @@
                     fetchPersistentState="true"
                     purgeOnStartup="true">
                 <properties>
-                    <property name="location" value="../modeshape-jcr/target/modeshape-performance-test/${cluster.testname}/node${cluster.item.number}/repository" />
+                    <property name="location" value="../modeshape-jcr/target/benchmark-move-documents/${cluster.testname}/node${cluster.item.number}/repository" />
                 </properties>
             </loader>
         </loaders>
