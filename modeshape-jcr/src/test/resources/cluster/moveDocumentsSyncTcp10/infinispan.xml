@@ -23,13 +23,13 @@
                      transactionMode="TRANSACTIONAL"
                      lockingMode="PESSIMISTIC" />
         <loaders passivation="false"
-                 shared="false"
+                 shared="true"
                  preload="false">
             <loader class="org.infinispan.loaders.file.FileCacheStore"
                     fetchPersistentState="true"
                     purgeOnStartup="true">
                 <properties>
-                    <property name="location" value="../modeshape-jcr/target/benchmark-move-documents/${cluster.testname}/node${cluster.item.number}/repository" />
+                    <property name="location" value="../modeshape-jcr/target/benchmark-move-documents/${cluster.testname}/repository" />
                 </properties>
             </loader>
         </loaders>

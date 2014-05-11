@@ -1,9 +1,12 @@
 package org.modeshape.jcr.benchmark;
 
 import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
+import com.carrotsearch.junitbenchmarks.annotation.BenchmarkHistoryChart;
 import com.carrotsearch.junitbenchmarks.annotation.BenchmarkMethodChart;
+import com.carrotsearch.junitbenchmarks.annotation.LabelType;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrSession;
@@ -26,19 +29,29 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test to measure execution time for creating documents with different configurations in cluster.
- * Report will be generated to <a href="../modeshape-jcr/target/benchmark-create-documents/report.html">file</a>
+ * Test to measure execution time of creation documents in same folder with
+ * different configurations in cluster.
+ *
+ * This class will generate a graphical summary for all benchmarked
+ * methods of the annotated class. Report will be available in
+ * <a href="../modeshape-jcr/target/benchmark/create-documents-report.html">file</a>
+ * This class will also generate a graphical summary of the historical and
+ * current run of a given set of methods. Report will be available in
+ * <a href="../modeshape-jcr/target/benchmark/create-documents-report-history.html">file</a>
+ *
  * @author evgeniy.shevchenko
  * @version 1.0 4/29/14
  */
-@BenchmarkMethodChart(filePrefix = "../modeshape-jcr/target/benchmark-create-documents/report")
+@BenchmarkMethodChart(filePrefix = "../modeshape-jcr/target/benchmark/create-documents-report")
+@BenchmarkHistoryChart(labelWith = LabelType.CUSTOM_KEY, maxRuns = 20, filePrefix = "../modeshape-jcr/target/benchmark/create-documents-report-history")
+@BenchmarkOptions(benchmarkRounds = 4, warmupRounds = 0)
 public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
 
 
     /**
      * Count of documents to create.
      */
-    private static int TASKS_COUNT = 100;
+    private static int TASKS_COUNT = 1000;
 
     private static final String BODY = "../modeshape-jcr/src/test/resources/cluster/%s/repo.json";
     /**
@@ -49,23 +62,13 @@ public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
             new HashSet<String>(TASKS_COUNT);
 
     @Before
-    public void before() {
+    public void before() throws Exception {
+        super.before();
         taskResults.clear();
-    }
-    /**
-     * Test async distribution mode with tcp transport
-     * Full configuration can be found by this
-     * <a href="file:////src/test/resources/cluster/createDocumentsAsyncTcp/repo.json">link</a>
-     * @throws Exception on error
-     */
-    @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
-    public void createDocumentsAsyncTcp() throws Exception{
-        executeTest();
     }
 
     /**
-     * Test async replication mode with tcp transport
+     * Test sync replication mode with tcp transport
      * Full configuration can be found by this
      * <a href="file:////src/test/resources/cluster/createDocumentsSyncTcp/repo.json">link</a>
      * @throws Exception on error
@@ -76,17 +79,20 @@ public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
         executeTest();
     }
 
+
     /**
      * Generate list of {@see Callable} tasks.
-     * One task will login to random repo in cluster and create document
+     * Where one task will login to random repo in cluster and create document
      * with body.
+     * The size of list will be equal {@link #TASKS_COUNT}.
+     *
      * @return List of tasks
      */
     @Override
     protected List<Callable<String>> generateTasks() {
         return BenchmarkTestHelper
                 .generateCreateDocumentsTasks(
-                        repositories, TASKS_COUNT, methodName);
+                        repositories, TASKS_COUNT, getMethodName());
     }
 
 
@@ -118,6 +124,11 @@ public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
         }
     }
 
+    /**
+     * Process result of execution one {@see Callable} task.
+     * @param result   Result of execution one {@see Callable} task.
+     * @throws Exception on error.
+     */
     @Override
     protected void processTaskResult(String result) throws Exception {
         taskResults.add(result);

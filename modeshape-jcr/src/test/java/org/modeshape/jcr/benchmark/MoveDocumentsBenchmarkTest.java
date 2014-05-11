@@ -1,12 +1,16 @@
 package org.modeshape.jcr.benchmark;
 
 import com.carrotsearch.junitbenchmarks.BenchmarkOptions;
+import com.carrotsearch.junitbenchmarks.annotation.BenchmarkHistoryChart;
 import com.carrotsearch.junitbenchmarks.annotation.BenchmarkMethodChart;
+import com.carrotsearch.junitbenchmarks.annotation.LabelType;
 import junit.framework.Assert;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.modeshape.common.util.FileUtil;
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrSession;
 
@@ -18,6 +22,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -28,19 +33,30 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Test to measure execution time of move documents with different configurations in cluster.
- * Report will be generated to <a href="../modeshape-jcr/target/benchmark-move-documents/report.html">file</a>
+ * Test to measure execution time of move documents with
+ * different configurations in cluster.
+ *
+ * This class will generate a graphical summary for all benchmarked
+ * methods of the annotated class. Report will be available in
+ * <a href="../modeshape-jcr/target/benchmark/move-documents-report.html">file</a>
+ * This class will also generate a graphical summary of the historical and
+ * current run of a given set of methods. Report will be available in
+ * <a href="../modeshape-jcr/target/benchmark/move-documents-report-history.html">file</a>
+ *
  * @author evgeniy.shevchenko
  * @version 1.0 4/29/14
  */
-@BenchmarkMethodChart(filePrefix = "../modeshape-jcr/target/benchmark-move-documents/report")
+
+@BenchmarkMethodChart(filePrefix = "../modeshape-jcr/target/benchmark/move-documents-report")
+@BenchmarkHistoryChart(labelWith = LabelType.CUSTOM_KEY, maxRuns = 20, filePrefix = "../modeshape-jcr/target/benchmark/move-documents-report-history")
+@BenchmarkOptions(benchmarkRounds = 3, warmupRounds = 0)
 public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
 
 
     private static final String SOURCE_PATH = "/source";
     private static final String DEST_PATH = "/dest";
     private static final String EXPECTED_CONTENT = "Lorem ipsum";
-    private static final int EXPECTED_SIZE = 40;
+    private static final int EXPECTED_SIZE = 10;
 
     /**
      * List of documents identifiers, which will be validated on all
@@ -50,62 +66,65 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
             new HashSet<String>();
 
     @Before
-    public void before() {
+    public void before() throws Exception {
+        super.before();
         taskResults.clear();
     }
 
 
     /**
-     * Test async replication mode with tcp transport
+     * Test sync replication mode with tcp transport
      * Full configuration can be found by this
      * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
      * @throws Exception on error
      */
     @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
     public void moveDocumentsSyncTcp() throws Exception{
         executeTest();
     }
 
     /**
-     * Test async replication mode with tcp transport
+     * Test sync replication mode with tcp transport
      * Full configuration can be found by this
-     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp10/repo.json">link</a>
      * @throws Exception on error
      */
     @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
     public void moveDocumentsSyncTcp10() throws Exception{
         executeTest(10);
     }
 
     /**
-     * Test async replication mode with tcp transport
+     * Test sync replication mode with tcp transport
      * Full configuration can be found by this
-     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp15/repo.json">link</a>
      * @throws Exception on error
      */
     @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
     public void moveDocumentsSyncTcp15() throws Exception{
         executeTest(15);
     }
 
     /**
-     * Test async replication mode with tcp transport
+     * Test sync replication mode with tcp transport
      * Full configuration can be found by this
-     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp/repo.json">link</a>
+     * <a href="file:////src/test/resources/cluster/moveDocumentsSyncTcp20/repo.json">link</a>
      * @throws Exception on error
      */
     @Test
-    @BenchmarkOptions(benchmarkRounds = 1, warmupRounds = 0)
     public void moveDocumentsSyncTcp20() throws Exception{
         executeTest(20);
     }
+
     /**
      * Generate list of {@see Callable} tasks.
-     * One task will login to random repo in cluster and create document
-     * with body.
+     * Read the source folder and create {@see List} of {@see Callable}
+     * tasks for each node.
+     * Where one task will login to random repo in cluster and
+     * execute "move operation" for correct node. The size of list will be
+     * equal size of source folder(One task per one node to exclude concurrent
+     * move for same node).
+     *
      * @return List of tasks
      */
     @Override
@@ -145,6 +164,11 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
         }
     }
 
+    /**
+     * Process result of execution one {@see Callable} task.
+     * @param result   Result of execution one {@see Callable} task.
+     * @throws Exception on error.
+     */
     @Override
     protected void processTaskResult(String result) throws Exception {
         if (result!=null) {
@@ -195,6 +219,7 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
                                 sourceFolder.getIdentifier()));
                 session.move(item.getPath(), destinationPath + "/" + item.getName());
                 session.save();
+
                 return item.getIdentifier();
 
             } finally {

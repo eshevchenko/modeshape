@@ -32,6 +32,7 @@ import com.carrotsearch.junitbenchmarks.annotation.LabelType;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,29 +75,40 @@ import javax.jcr.Node;
 import javax.jcr.RepositoryException;
 
 /**
- * Execute test in cluster environment.
- *
+ * A superclass for tests that should be executed as benchmarks (several
+ * rounds, GC and time accounting). Provides a JUnit rule in {@link #rule}
+ * that runs the tests repeatedly, logging the intermediate results (memory
+ * usage, times). Superclass has initialize appropriate system variables to
+ * setup cluster environment. This variables are used in configuration files.
+ * Each configuration should be present in
+ * <a href="file:////src/test/resources/cluster/">folder</a>.
+ * Configuration is a folder with the name equal to the name of the test
+ * method. For example if test method is "testConfigurationXXX" than
+ * folder with name "testConfigurationXXX" should be present in
+ * <a href="file:////src/test/resources/cluster/">folder</a>.
+ * The name of repository configuration file should be "repo.json".
  *
  * @author evgeniy.shevchenko
  * @version 1.0 4/14/14
  */
 public abstract class AbstractBenchmarkTest {
-    protected static int DEFAULT_POOL_SIZE = Runtime.getRuntime().availableProcessors();
+    protected static int DEFAULT_POOL_SIZE =
+            Runtime.getRuntime().availableProcessors();
 
-
-
+    private static final String OUTPUT_FOLDER = "../modeshape-jcr/target/benchmark/%s";
 
     /**
      * Count of cluster nodes.
      */
-    protected static int CLUSTER_NODES_COUNT = 4;
+    protected static int CLUSTER_NODES_COUNT = 2;
 
     /**
      * Array of cluster repositories.
      */
     protected JcrRepository[] repositories;
 
-    protected String methodName;
+    private String methodName;
+
     /**
      *  A benchmark rule to  execution time of test action.
      */
@@ -104,7 +116,9 @@ public abstract class AbstractBenchmarkTest {
     public TestRule rule = RuleChain.outerRule(
             new TestWatcher() {
                 /**
-                 * Start all repositories and run the test action.
+                 * Initialize the name of test method, it will be used
+                 * in configuration files as cluster name.
+                 * Run the test action.
                  * @param base
                  * @param description
                  * @return
@@ -114,82 +128,67 @@ public abstract class AbstractBenchmarkTest {
                    return new Statement() {
                         @Override
                         public void evaluate() throws Throwable {
-                            // Start repositories before test will be executed to exclude
-                            // "cluster startup time" from measure.
-                            startRepositories(description);
+                            methodName = description.getMethodName();
                             base.evaluate();
                         }
                     };
                 }
-
-
-                /**
-                 * Start all cluster nodes.
-                 * @throws Exception
-                 */
-                private void startRepositories(final Description description)
-                        throws Exception {
-                    methodName = description.getMethodName();
-                    System.setProperty("cluster.testname", methodName);
-                    repositories = new JcrRepository[CLUSTER_NODES_COUNT];
-                    for (int i = 0; i < CLUSTER_NODES_COUNT; i++) {
-                        System.setProperty(
-                                "jgroups.tcp.port",
-                                new Integer(17900 + i).toString());
-                        System.setProperty(
-                                "cluster.item.number",
-                                new Integer(i).toString());
-
-                        repositories[i] =
-                                TestingUtil
-                                        .startRepositoryWithConfig(
-                                                String.format(
-                                                        "cluster/%s/repo.json", methodName));
-                    }
-                }
-
             }).around(new BenchmarkRule());
 
+
     /**
-     * Bind Jgroups, init system variables.
+     * Start repositories before test execution(to exclude
+     * "cluster startup time" from measure).
      * @throws Exception
      */
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-
-        ClusteringHelper.bindJGroupsToLocalAddress();
+    @Before
+    public void before()
+            throws Exception {
+        FileUtil.delete(String.format(OUTPUT_FOLDER, getMethodName()));
+        System.setProperty("cluster.testname", methodName);
+        repositories = new JcrRepository[CLUSTER_NODES_COUNT];
+        for (int i = 0; i < CLUSTER_NODES_COUNT; i++) {
+            System.setProperty(
+                    "jgroups.tcp.port",
+                    new Integer(17900 + i).toString());
+            System.setProperty(
+                    "cluster.item.number",
+                    new Integer(i).toString());
+            repositories[i] =
+                    TestingUtil
+                            .startRepositoryWithConfig(
+                                    String.format(
+                                            "cluster/%s/repo.json", methodName));
+        }
     }
 
-    /**
-     * Unbind Jgroups.
-     * @throws Exception
-     */
-    @AfterClass
-    public static void afterClass() throws Exception {
-        ClusteringHelper.removeJGroupsBindings();
-    }
 
     /**
-     * Stop engines.
+     * Validate that all changes were replicated to all repositories.
+     * Stop repositories.
      * @throws Exception
      */
     @After
     public void after() throws Exception {
-        Thread.sleep(3000);
-        validate();
-        TestingUtil.killRepositories(repositories);
+        try{
+            Thread.sleep(3000);
+            //validate();
+        } finally {
+            TestingUtil.killRepositories(repositories);
+        }
     }
 
     /**
-     * Execute {@see MoveNodeTask} tasks.
-     * @throws Exception
+     * Execute {@see Callable} tasks.
+     * @throws Exception on error
      */
     protected void executeTest() throws Exception{
         executeTest(DEFAULT_POOL_SIZE);
     }
+
     /**
-     * Execute {@see MoveNodeTask} tasks.
-     * @throws Exception
+     * Execute {@see Callable} tasks.
+     * @throws Exception on error
      */
     protected void executeTest(final int poolSize)
                 throws Exception {
@@ -207,10 +206,34 @@ public abstract class AbstractBenchmarkTest {
         }
     }
 
+    /**
+     * Get the name of test method, it will be used in configuration
+     * files as cluster name.
+     * @return name of test method.
+     */
+    protected String getMethodName() {
+        return methodName;
+    }
 
+    /**
+     * Generate list of {@see Callable} tasks.
+     * @return List of tasks
+     */
+    protected abstract List<Callable<String>> generateTasks()
+            throws RepositoryException;
 
+    /**
+     * Validate that all changes were replicated to all repositories.
+     * @throws Exception on error
+     */
+    protected abstract void validate()
+            throws Exception;
 
-    protected abstract List<Callable<String>> generateTasks() throws RepositoryException;
-    protected abstract void validate() throws Exception;
-    protected abstract void processTaskResult(String result) throws Exception;
+    /**
+     * Process result of execution one {@see Callable} task.
+     * @param result      Result of execution one {@see Callable} task.
+     * @throws Exception on error.
+     */
+    protected abstract void processTaskResult(String result)
+            throws Exception;
 }

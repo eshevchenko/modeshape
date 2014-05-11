@@ -27,7 +27,7 @@
         "cacheConfiguration": "../modeshape-jcr/target/test-classes/cluster/${cluster.testname}/infinispan.xml",
         "binaryStorage": {
             "type": "file",
-            "directory": "../modeshape-jcr/target/benchmark-move-documents/${cluster.testname}/node${cluster.item.number}/repository/binary",
+            "directory": "../modeshape-jcr/target/benchmark/${cluster.testname}/node${cluster.item.number}/repository/binary",
             "minimumBinarySizeInBytes": 4096
         }
     },
@@ -35,7 +35,7 @@
         "enabled": true,
         "indexStorage": {
             "type": "filesystem",
-            "location": "../modeshape-jcr/target/benchmark-move-documents/${cluster.testname}/node${cluster.item.number}/repository/index",
+            "location": "../modeshape-jcr/target/benchmark/${cluster.testname}/node${cluster.item.number}/repository/index",
             "lockingStrategy": "native",
             "fileSystemAccessType": "auto"
         },

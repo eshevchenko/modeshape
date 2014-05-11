@@ -29,7 +29,7 @@
                     fetchPersistentState="true"
                     purgeOnStartup="true">
                 <properties>
-                    <property name="location" value="../modeshape-jcr/target/benchmark-create-documents/${cluster.testname}/node${cluster.item.number}/repository" />
+                    <property name="location" value="../modeshape-jcr/target/benchmark/${cluster.testname}/repository" />
                 </properties>
             </loader>
         </loaders>
