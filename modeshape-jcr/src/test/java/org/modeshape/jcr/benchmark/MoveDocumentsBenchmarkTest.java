@@ -10,7 +10,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.modeshape.common.util.FileUtil;
+
 import org.modeshape.jcr.JcrRepository;
 import org.modeshape.jcr.JcrSession;
 
@@ -129,7 +129,7 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
      */
     @Override
     protected List<Callable<String>> generateTasks() throws RepositoryException {
-        return BenchmarkTestHelper
+        return BenchmarkTestUtil
                 .generateMoveNodesTasks(repositories, SOURCE_PATH, DEST_PATH);
     }
 
@@ -145,7 +145,7 @@ public class MoveDocumentsBenchmarkTest extends AbstractBenchmarkTest {
             JcrSession session = null;
             try {
                 session = repository.login();
-                BenchmarkTestHelper
+                BenchmarkTestUtil
                         .validateRepository(
                                 session,
                                 taskResults,

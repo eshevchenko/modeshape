@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
  * @version 1.0 4/30/14
  */
 
-public class BenchmarkTestHelper {
+public class BenchmarkTestUtil {
     public static final Random RANDOM = new Random();
 
     /**

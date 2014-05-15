@@ -90,7 +90,7 @@ public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
      */
     @Override
     protected List<Callable<String>> generateTasks() {
-        return BenchmarkTestHelper
+        return BenchmarkTestUtil
                 .generateCreateDocumentsTasks(
                         repositories, TASKS_COUNT, getMethodName());
     }
@@ -107,7 +107,7 @@ public class CreateDocumentsBenchmarkTest extends AbstractBenchmarkTest {
             JcrSession session = null;
             try {
                 session = repository.login();
-                BenchmarkTestHelper
+                BenchmarkTestUtil
                         .validateRepository(
                                 session,
                                 taskResults,
